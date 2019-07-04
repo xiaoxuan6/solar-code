@@ -9,6 +9,7 @@
 namespace James\SolarCode;
 
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Storage;
 use James\SolarCode\Exception\ErrorException;
 
 class SolarCode
@@ -16,6 +17,7 @@ class SolarCode
     const URLA = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=";
     const URLB = "https://api.weixin.qq.com/wxa/getwxacode?access_token=";
 
+    private $path;
     /**
      * Notes: 二维码生成 A类
      * Date: 2019/7/4 14:49
@@ -27,9 +29,9 @@ class SolarCode
      * @param int $width        二维码的宽度
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public static function getCode($token = '', $path = '', $scene = '', $auto_color = false, $width = 430, $line_color = ['r' => '0', 'g' =>'0', 'b' =>'0'])
+    public function getCode($token = '', $path = '', $scene = '', $auto_color = false, $width = 430, $line_color = ['r' => '0', 'g' =>'0', 'b' =>'0'])
     {
-        if(!$token || !$path || $scene)
+        if(!$token || !$path || !$scene)
             throw new ErrorException("参数：Token、Path、Scene 必填！");
 
         $url = self::URLA.$token;
@@ -47,7 +49,9 @@ class SolarCode
         $response = $client->request('POST', $url, [
             'body' => json_encode($params)
         ]);
-        return json_decode($response->getBody()->getContents(), 1);
+
+        $this->path = $response->getBody()->getContents();
+        return $this;
     }
 
     /**
@@ -61,7 +65,7 @@ class SolarCode
      * @param int $width        二维码的宽度
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public static function getCodePath($token = '', $path = '', $auto_color = false, $width = 430, $line_color = ['r' => '0', 'g' =>'0', 'b' =>'0'])
+    public function getCodePath($token = '', $path = '', $auto_color = false, $width = 430, $line_color = ['r' => '0', 'g' =>'0', 'b' =>'0'])
     {
         if(!$token || !$path )
             throw new ErrorException("参数：Token、Path 必填！");
@@ -80,7 +84,44 @@ class SolarCode
         $response = $client->request('POST', $url, [
             'body' => json_encode($params)
         ]);
-        return json_decode($response->getBody()->getContents(), 1);
+
+        $this->path = $response->getBody()->getContents();
+        return $this;
     }
 
+    /**
+     * Notes: 生成图片
+     * Date: 2019/7/4 18:13
+     * @param string $disk
+     * @param string $fileName
+     * @param string $filePath
+     */
+    public function image($filePath = '', $fileName = '', $disk = 'public')
+    {
+        if(!$fileName)
+            $fileName = date('Ymd').uniqid().'.png';
+
+        $data = 'image/png;base64,'.base64_encode($this->path);
+
+        if (strstr($data,",")){
+            $image = explode(',',$data);
+            $image = $image[1];
+        }
+
+        $imageSrc = $filePath . DIRECTORY_SEPARATOR . $fileName;
+
+        Storage::disk($disk)->put($imageSrc, base64_decode($image));
+
+        return $filePath ? Storage::disk($disk)->url($imageSrc)  : Storage::disk($disk)->url($fileName);
+    }
+
+    /**
+     * Notes: 返回微信响应
+     * Date: 2019/7/4 18:42
+     * @return mixed
+     */
+    public function path()
+    {
+        return $this->path;
+    }
 }

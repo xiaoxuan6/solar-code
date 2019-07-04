@@ -22,7 +22,5 @@ class SolarCodeServiceProvider extends ServiceProvider
         $this->app->singleton('SolarCode', function(){
             return new SolarCode();
         });
-
-        class_alias ( '\James\SolarCode\Facades\SolarCode' , 'SolarCode');
     }
 }
