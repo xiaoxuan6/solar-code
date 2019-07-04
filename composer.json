@@ -1,0 +1,36 @@
+{
+    "name": "james.xue/solar-code",
+    "description": "",
+    "type": "library",
+    "keywords":
+    [
+        "solar-code",
+        "code",
+        "solar",
+        "laravel"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "james.xue",
+            "email": "1527736751@qq.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0",
+        "guzzlehttp/guzzle": "~6.0",
+        "laravel/framework": "5.4.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "James\\SolarCode\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "James\\SolarCode\\SolarCodeServiceProvider"
+            ]
+        }
+    }
+}
