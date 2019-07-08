@@ -1,6 +1,6 @@
 {
     "name": "james.xue/solar-code",
-    "description": "",
+    "description": "微信小程序生成太阳码",
     "type": "library",
     "keywords":
     [
@@ -18,8 +18,7 @@
     ],
     "require": {
         "php": ">=7.0.0",
-        "guzzlehttp/guzzle": "~6.0",
-        "laravel/framework": "5.4.*"
+        "guzzlehttp/guzzle": "~6.0"
     },
     "autoload": {
         "psr-4": {

@@ -7,8 +7,9 @@
 
 ## User
 
-    SolarCode::getCode($accessToken,'/pages/index/index', 'goods_id=1')
-    SolarCode::getCodePath($accessToken,'/pages/index/index')
+    $solar = new SolarCode;
+    $result = $solar->getCode($accessToken, 'pages/findModule/pages/index/index', 'sd')->image();
+    $result = $solar->getCode($accessToken, 'pages/findModule/pages/index/index', 'sd')->path();
 
 [Awesome](https://github.com/xiaoxuan6/)
  
