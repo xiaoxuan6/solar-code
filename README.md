@@ -8,9 +8,8 @@
 ## User
 
     $solar = new SolarCode;
-    $result = $solar->getCode($accessToken, 'pages/findModule/pages/index/index', 'sd')->image();
-    $result = $solar->getCode($accessToken, 'pages/findModule/pages/index/index', 'sd')->path();
-
+    $solar->getWxcode($accessToken, 'pages/findModule/pages/index/index')->response(); // image()、imagePath()
+    
 [Awesome](https://github.com/xiaoxuan6/)
  
  
