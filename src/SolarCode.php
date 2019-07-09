@@ -60,6 +60,7 @@ class SolarCode
         ]);
 
         $this->path = $response->getBody()->getContents();
+
         return $this;
     }
 
@@ -95,6 +96,7 @@ class SolarCode
         ]);
 
         $this->path = $response->getBody()->getContents();
+
         return $this;
     }
 
@@ -125,6 +127,7 @@ class SolarCode
         ]);
 
         $this->path = $response->getBody()->getContents();
+
         return $this;
     }
 
