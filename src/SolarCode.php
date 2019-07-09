@@ -19,24 +19,32 @@ class SolarCode
     const CREATEWXAQRCODE_URL= "https://api.weixin.qq.com/cgi-bin/wxaapp/createwxaqrcode?access_token=";
 
     private $path;
+    private $token;
+
+    /**
+     * SolarCode constructor.
+     * @param $token 小程序的token
+     */
+    public function __construct($token)
+    {
+        $this->token = $token;
+    }
 
     /**
      * Notes: 二维码生成 A类  适用于需要的码数量较少的业务场景
      * Date: 2019/7/4 15:21
-     * @param $token            小程序的token
-     * @param $scene            最大32个可见字符，只支持数字，大小写英文以及部分特殊字
      * @param $path             不能为空，最大长度 128 字节
      * @param bool $auto_color  自动配置线条颜色，如果颜色依然是黑色，则说明不建议配置主色调
      * @param array $line_color 二维码的线条颜色
      * @param int $width        二维码的宽度
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getWxcode($token = '', $path = '', $width = 430, $auto_color = false, $line_color = ['r' => '0', 'g' =>'0', 'b' =>'0'])
+    public function getWxcode($path = '', $width = 430, $auto_color = false, $line_color = ['r' => '0', 'g' =>'0', 'b' =>'0'])
     {
-        if(!$token || !$path )
-            throw new ErrorException("参数：Token、Path 必填！");
+        if(!$path)
+            throw new ErrorException("参数：Path 必填！");
 
-        $url = self::WXACODE_URL.$token;
+        $url = self::WXACODE_URL.$this->token;
 
         $params = [
             'path'=> $path,
@@ -58,7 +66,6 @@ class SolarCode
     /**
      * Notes: 二维码生成 B类  适用于需要的码数量极多，或仅临时使用的业务场景
      * Date: 2019/7/4 14:49
-     * @param $token            小程序的token
      * @param $scene            最大32个可见字符，只支持数字，大小写英文以及部分特殊字
      * @param $path             不能为空，最大长度 128 字节
      * @param bool $auto_color  自动配置线条颜色，如果颜色依然是黑色，则说明不建议配置主色调
@@ -66,12 +73,12 @@ class SolarCode
      * @param int $width        二维码的宽度
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getWxcodeunlimit($token = '', $path = '', $scene = '', $width = 430, $auto_color = false, $line_color = ['r' => '0', 'g' =>'0', 'b' =>'0'])
+    public function getWxcodeunlimit($path = '', $scene = '', $width = 430, $auto_color = false, $line_color = ['r' => '0', 'g' =>'0', 'b' =>'0'])
     {
-        if(!$token || !$path || !$scene)
-            throw new ErrorException("参数：Token、Path、Scene 必填！");
+        if(!$path || !$scene)
+            throw new ErrorException("参数：Path、Scene 必填！");
 
-        $url = self::WXACODEUNLIMIT_URL.$token;
+        $url = self::WXACODEUNLIMIT_URL.$this->token;
 
         $params = [
             'scene'=> $scene,
@@ -94,19 +101,18 @@ class SolarCode
     /**
      * Notes: 二维码生成 C类  适用于需要的码数量较少的业务场景
      * Date: 2019/7/8 14:47
-     * @param $token        小程序的token
      * @param string $path  不能为空，最大长度 128 字节
      * @param int $width    二维码的宽度
      * @return $this
      * @throws ErrorException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function createwxaqrcode($token, $path= '', $width = 430)
+    public function createwxaqrcode($path= '', $width = 430)
     {
-        if(!$token || !$path )
-            throw new ErrorException("参数：Token、Path 必填！");
+        if(!$path)
+            throw new ErrorException("参数：Path 必填！");
 
-        $url = self::CREATEWXAQRCODE_URL.$token;
+        $url = self::CREATEWXAQRCODE_URL.$this->token;
 
         $params = [
             'path'=> $path,
@@ -153,7 +159,7 @@ class SolarCode
      * Date: 2019/7/4 18:42
      * @return mixed
      */
-    public function path()
+    public function response()
     {
         return $this->path;
     }
