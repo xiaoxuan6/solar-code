@@ -163,16 +163,9 @@ class SolarCode
         if(!$fileName)
             $fileName = date('Ymd').uniqid().'.png';
 
-        $data = 'image/png;base64,'.base64_encode($this->path);
-
-        if (strstr($data,",")){
-            $image = explode(',',$data);
-            $image = $image[1];
-        }
-
         $imageSrc = $filePath . DIRECTORY_SEPARATOR . $fileName;
 
-        Storage::disk($disk)->put($imageSrc, base64_decode($image));
+        Storage::disk($disk)->put($imageSrc, base64_decode(base64_encode($this->path)));
 
         return $filePath ? Storage::disk($disk)->url($imageSrc)  : Storage::disk($disk)->url($fileName);
     }
