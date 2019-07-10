@@ -132,6 +132,26 @@ class SolarCode
     }
 
     /**
+     * Notes: 返回微信响应
+     * Date: 2019/7/4 18:42
+     * @return mixed
+     */
+    public function response()
+    {
+        return $this->path;
+    }
+
+    /**
+     * Notes: 生成图片--不保存
+     * Date: 2019/7/8 14:20
+     * @return mixed
+     */
+    public function image()
+    {
+        return response($this->path)->header('Content-Type', 'image/jpeg');
+    }
+
+    /**
      * Notes: 生成图片--保存
      * Date: 2019/7/4 18:13
      * @param string $disk
@@ -158,22 +178,12 @@ class SolarCode
     }
 
     /**
-     * Notes: 返回微信响应
-     * Date: 2019/7/4 18:42
-     * @return mixed
+     * Notes: 生成 base64
+     * Date: 2019/7/10 13:57
+     * @return string
      */
-    public function response()
+    public function base64()
     {
-        return $this->path;
-    }
-
-    /**
-     * Notes: 生成图片--不保存
-     * Date: 2019/7/8 14:20
-     * @return mixed
-     */
-    public function image()
-    {
-        return response($this->path)->header('Content-Type', 'image/jpeg');
+        return 'data:image/png;base64,'.base64_encode($this->path);
     }
 }
