@@ -68,7 +68,7 @@ class SolarCode
      * Notes: 二维码生成 B类  适用于需要的码数量极多，或仅临时使用的业务场景
      * Date: 2019/7/4 14:49
      * @param $scene            最大32个可见字符，只支持数字，大小写英文以及部分特殊字
-     * @param $path             不能为空，最大长度 128 字节
+     * @param $path             必须是已经发布的小程序存在的页面（否则报错），例如 pages/index/index, 根路径前不要填加 /,不能携带参数（参数请放在scene字段里），如果不填写这个字段，默认跳主页面
      * @param bool $auto_color  自动配置线条颜色，如果颜色依然是黑色，则说明不建议配置主色调
      * @param array $line_color 二维码的线条颜色
      * @param int $width        二维码的宽度
@@ -83,7 +83,7 @@ class SolarCode
 
         $params = [
             'scene'=> $scene,
-            'path'=> $path,
+            'page'=> $path,
             'width' => $width,
             'auto_color' => $auto_color,
             'line_color'=> $line_color, //文档中是json对象，在代码中就传数组
