@@ -30,7 +30,10 @@
         "laravel": {
             "providers": [
                 "James\\SolarCode\\SolarCodeServiceProvider"
-            ]
+            ],
+            "aliases":{
+                "SolarCode": "James\\SolarCode\\Facades\\SolarCode"
+            }
         }
     }
 }
