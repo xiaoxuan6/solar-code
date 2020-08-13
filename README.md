@@ -7,7 +7,7 @@
 
 ## User
 
-    user SolarCode;
+    user James\SolarCode\SolarCode;
     
     $solar = new SolarCode($token);
     $solar->getWxcode('pages/findModule/pages/index/index')->response(); // image()、imagePath()

@@ -19,7 +19,8 @@
     ],
     "require": {
         "php": ">=7.0.0",
-        "guzzlehttp/guzzle": "~6.0"
+        "guzzlehttp/guzzle": "~6.0",
+        "illuminate/cache": "^5.0|^6.0|^7.0"
     },
     "autoload": {
         "psr-4": {
@@ -30,10 +31,7 @@
         "laravel": {
             "providers": [
                 "James\\SolarCode\\SolarCodeServiceProvider"
-            ],
-            "aliases":{
-                "SolarCode": "James\\SolarCode\\Facades\\SolarCode"
-            }
+            ]
         }
     }
 }
