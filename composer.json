@@ -43,7 +43,7 @@
         "phpstan/phpstan": "^1.4",
         "laravel/framework": "^5.0|^6.0|^7.0|^8.0|^9.0"
     },
-    "scriptes": {
+    "scripts": {
         "fix-style": "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --using-cache=no --ansi"
     }
 }
