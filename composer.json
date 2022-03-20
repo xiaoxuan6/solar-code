@@ -19,8 +19,9 @@
     ],
     "require": {
         "php": ">=7.0.0",
+        "ext-json": "*",
         "guzzlehttp/guzzle": "~6.0",
-        "illuminate/cache": "^5.0|^6.0|^7.0"
+        "illuminate/cache": "^5.0|^6.0|^7.0|^8.0|^9.0"
     },
     "autoload": {
         "psr-4": {
@@ -32,6 +33,14 @@
             "providers": [
                 "James\\SolarCode\\SolarCodeServiceProvider"
             ]
+        },
+        "aliases":{
+            "SolarCode": "James\\SolarCode\\Facades\\SolarCode"
         }
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.7",
+        "phpstan/phpstan": "^1.4",
+        "laravel/framework": "^5.0|^6.0|^7.0|^8.0|^9.0"
     }
 }

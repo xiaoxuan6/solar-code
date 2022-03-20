@@ -1,56 +1,52 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: james.xue
- * Date: 2019/7/4
- * Time: 14:30
+ * This file is part of PHP CS Fixer.
+ *
+ * (c) vinhson <15227736751@qq.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
  */
-
 namespace James\SolarCode;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Response;
+use Illuminate\Contracts\Config\Repository;
 use James\SolarCode\Exception\ErrorException;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\{Cache, Storage};
+use Illuminate\Contracts\Routing\ResponseFactory;
+use GuzzleHttp\Exception\{GuzzleException, RequestException};
 
 class SolarCode
 {
-    private $appid;
-    private $secret;
-    private $token;
+    public $config;
     private $path;
-    protected $client;
+    protected static $client;
 
-    const CACHE_PREFIX = "solar_access_token";
-    const ACCESS_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s";
-    const WXACODEUNLIMIT_URL = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=";
-    const WXACODE_URL = "https://api.weixin.qq.com/wxa/getwxacode?access_token=";
-    const CREATEWXAQRCODE_URL = "https://api.weixin.qq.com/cgi-bin/wxaapp/createwxaqrcode?access_token=";
+    public const ACCESS_TOKEN_URL = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s';
+    public const WXACODEUNLIMIT_URL = 'https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=';
+    public const WXACODE_URL = 'https://api.weixin.qq.com/wxa/getwxacode?access_token=';
+    public const CREATEWXAQRCODE_URL = 'https://api.weixin.qq.com/cgi-bin/wxaapp/createwxaqrcode?access_token=';
 
     /**
      * SolarCode constructor.
-     * @param null $token
-     * @param null $appid
-     * @param null $secret
      */
-    public function __construct($token = null, $appid = null, $secret = null, $expires_time = 0)
+    public function __construct(Repository $config)
     {
-        $this->client = new Client([
-            'verify'  => false,
-            'timeout' => 30
-        ]);
+        $this->config = $config;
+    }
 
-        if ($token) {
-            $this->token = $token;
+    /**
+     * @return Client
+     */
+    public static function getClient(): Client
+    {
+        if (empty(self::$client)) {
+            self::$client = new Client(['verify' => false, 'timeout' => 30]);
         }
 
-        if($appid && $secret){
-            $this->appid = $appid;
-            $this->secret = $secret;
-
-            $this->token = $this->getAccessToken($appid, $secret, $expires_time);
-        }
+        return self::$client;
     }
 
     /**
@@ -58,24 +54,25 @@ class SolarCode
      * Date: 2020/8/13 13:52
      * @param null $appid
      * @param null $secret
-     * @param int $expires_in
      * @return mixed
      * @throws ErrorException
      */
-    public function getAccessToken($appid = null, $secret = null, $expires_in = 0)
+    public function getAccessToken($appid = null, $secret = null)
     {
-        if (Cache::has(self::CACHE_PREFIX))
-            return Cache::get(self::CACHE_PREFIX);
+        $prefix = $this->config->get('solar_code.token_prefix');
+        if (Cache::has($prefix)) {
+            return Cache::get($prefix);
+        }
 
-        if (!$appid || !$secret) {
-            $appid = $this->appid;
-            $secret = $this->secret;
+        if (! $appid || ! $secret) {
+            $appid = $this->config->get('solar_code.app_id');
+            $secret = $this->config->get('solar_code.app_secret');
         }
 
         $url = sprintf(self::ACCESS_TOKEN_URL, $appid, $secret);
 
         try {
-            $response = $this->client->get($url);
+            $response = self::getClient()->get($url);
 
             $result = json_decode($response->getBody()->getContents(), 1);
             if (isset($result['errcode']) && $result['errcode'] != 0) {
@@ -83,9 +80,8 @@ class SolarCode
             }
 
             $access_token = $result['access_token'];
-
         } catch (RequestException $exception) {
-            throw new ErrorException("invalid access token");
+            throw new ErrorException('invalid access token');
         }
 
         if (app()->version() < 5.8) {
@@ -94,37 +90,39 @@ class SolarCode
             $expires_time = $result['expires_in'];
         }
 
-        $expires_time = $expires_in ? $expires_in : $expires_time;
+        $expires_time = $this->config->get('solar_code.token_expires_time') ?: $expires_time;
 
-        Cache::put(self::CACHE_PREFIX, $access_token, $expires_time);
+        Cache::put($prefix, $access_token, $expires_time);
+
         return $access_token;
     }
 
     /**
      * Notes: 二维码生成 A类  适用于需要的码数量较少的业务场景
      * Date: 2019/7/4 15:21
-     * @param $path             不能为空，最大长度 128 字节
+     * @param string $path 不能为空，最大长度 128 字节
      * @param bool $auto_color 自动配置线条颜色，如果颜色依然是黑色，则说明不建议配置主色调
      * @param array $line_color 二维码的线条颜色
      * @param int $width 二维码的宽度
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException|ErrorException
      */
-    public function getWxcode($path = '', $width = 430, $auto_color = false, $line_color = ['r' => '0', 'g' => '0', 'b' => '0'])
+    public function getWxcode(string $path = '', int $width = 430, bool $auto_color = false, array $line_color = ['r' => '0', 'g' => '0', 'b' => '0']): SolarCode
     {
-        if (!$path)
-            throw new ErrorException("参数：Path 必填！");
+        if (! $path) {
+            throw new ErrorException('参数：Path 必填！');
+        }
 
-        $url = self::WXACODE_URL . $this->token;
+        $url = self::WXACODE_URL . $this->getAccessToken();
 
         $params = [
-            'path'       => $path,
-            'width'      => $width,
+            'path' => $path,
+            'width' => $width,
             'auto_color' => $auto_color,
             'line_color' => $line_color, //文档中是json对象，在代码中就传数组
             'is_hyaline' => false,
         ];
 
-        $response = $this->client->request('POST', $url, [
+        $response = self::getClient()->request('POST', $url, [
             'body' => json_encode($params)
         ]);
 
@@ -136,30 +134,31 @@ class SolarCode
     /**
      * Notes: 二维码生成 B类  适用于需要的码数量极多，或仅临时使用的业务场景
      * Date: 2019/7/4 14:49
-     * @param $scene            最大32个可见字符，只支持数字，大小写英文以及部分特殊字
-     * @param $page             不能为空，最大长度 128 字节
+     * @param string $scene 最大32个可见字符，只支持数字，大小写英文以及部分特殊字
+     * @param string $page 不能为空，最大长度 128 字节
      * @param bool $auto_color 自动配置线条颜色，如果颜色依然是黑色，则说明不建议配置主色调
      * @param array $line_color 二维码的线条颜色
      * @param int $width 二维码的宽度
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException|ErrorException
      */
-    public function getWxcodeunlimit($page = '', $scene = '', $width = 430, $auto_color = false, $line_color = ['r' => '0', 'g' => '0', 'b' => '0'])
+    public function getWxcodeunlimit(string $page = '', string $scene = '', int $width = 430, bool $auto_color = false, array $line_color = ['r' => '0', 'g' => '0', 'b' => '0']): SolarCode
     {
-        if (!$page || !$scene)
-            throw new ErrorException("参数：Page、Scene 必填！");
+        if (! $page || ! $scene) {
+            throw new ErrorException('参数：Page、Scene 必填！');
+        }
 
-        $url = self::WXACODEUNLIMIT_URL . $this->token;
+        $url = self::WXACODEUNLIMIT_URL . $this->getAccessToken();
 
         $params = [
-            'scene'      => $scene,
-            'page'       => ltrim($page, "/"),
-            'width'      => $width,
+            'scene' => $scene,
+            'page' => ltrim($page, '/'),
+            'width' => $width,
             'auto_color' => $auto_color,
             'line_color' => $line_color, //文档中是json对象，在代码中就传数组
             'is_hyaline' => false,
         ];
 
-        $response = $this->client->request('POST', $url, [
+        $response = self::getClient()->request('POST', $url, [
             'body' => json_encode($params)
         ]);
 
@@ -175,21 +174,22 @@ class SolarCode
      * @param int $width 二维码的宽度
      * @return $this
      * @throws ErrorException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
-    public function createwxaqrcode($path = '', $width = 430)
+    public function createWxaqrcode(string $path = '', int $width = 430): SolarCode
     {
-        if (!$path)
-            throw new ErrorException("参数：Path 必填！");
+        if (! $path) {
+            throw new ErrorException('参数：Path 必填！');
+        }
 
-        $url = self::CREATEWXAQRCODE_URL . $this->token;
+        $url = self::CREATEWXAQRCODE_URL . $this->getAccessToken();
 
         $params = [
-            'path'  => $path,
+            'path' => $path,
             'width' => $width,
         ];
 
-        $response = $this->client->request('POST', $url, [
+        $response = self::getClient()->request('POST', $url, [
             'body' => json_encode($params)
         ]);
 
@@ -211,7 +211,7 @@ class SolarCode
     /**
      * Notes: 生成图片--不保存
      * Date: 2019/7/8 14:20
-     * @return mixed
+     * @return Application|ResponseFactory|Response
      */
     public function image()
     {
@@ -221,14 +221,16 @@ class SolarCode
     /**
      * Notes: 生成图片--保存
      * Date: 2019/7/4 18:13
-     * @param string $disk
-     * @param string $fileName
      * @param string $filePath
+     * @param string $fileName
+     * @param string $disk
+     * @return string
      */
-    public function imagePath($filePath = '', $fileName = '', $disk = 'public')
+    public function imagePath(string $filePath = '', string $fileName = '', string $disk = 'public'): string
     {
-        if (!$fileName)
+        if (! $fileName) {
             $fileName = date('Ymd') . uniqid() . '.png';
+        }
 
         $imageSrc = $filePath . DIRECTORY_SEPARATOR . $fileName;
 
@@ -242,7 +244,7 @@ class SolarCode
      * Date: 2019/7/10 13:57
      * @return string
      */
-    public function base64()
+    public function base64(): string
     {
         return 'data:image/png;base64,' . base64_encode($this->path);
     }
